@@ -1,0 +1,80 @@
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+    .experimentLikeButton{
+        background: none;
+        border: none;
+        margin-top: -5px;
+        margin-left: 5px;
+        position: absolute;
+    }
+    .experimentLikeButton:focus{
+        outline:0;
+    }
+</style>
+<div class="jumbotron">
+    <h2 class="form-signin-heading">{{title}}</h2>
+
+    <p card-subtitle text-muted>von: {{user}}, am: {{date}}, um: {{time}}</p>
+    <p>{{text}}</p>
+
+
+    <p card-subtitle text-muted>Kommentare:</p>
+    <form class="form-signin" action="/experiment" method="post">
+
+        <label for="comment" class="sr-only">Comment</label>
+        <input type="text" id="comment" name="commentText" class="form-control" placeholder="Eigenen Kommentar verfassen" required autofocus>
+
+        <input type="hidden" name="eid" value="{{eid}}">
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Kommentieren</button>
+    </form>
+    <br/>
+    <div class="row">
+        {{#each comments}}
+            <div class="col-lg-12">
+                <div class="card">
+                  <div class="card-body">
+                      <h6 class="card-subtitle mb-2 text-muted">von: {{this.cuname}}<br/>am: {{this.cdate}} um {{this.ctime}}</h6>
+                    <p class="card-text">{{this.ctext}}</p>
+                    <h6><span id="upvotes-{{this.cid}}">{{this.cupvotes}}</span>
+                        <button class="experimentLikeButton material-icons" id="likeButton-{{this.cid}}">&#xE8DC;</button>
+                    </h6>
+                    <script>
+                        var likes = {{this.cupvotes}};
+                        $(document).ready(function(){
+                            $("#likeButton-{{this.cid}}").click(function(){
+                                $.post("likeComment",
+                                {
+                                  cid: '{{this.cid}}'
+                                },
+                                function(status){
+                                    if(status == 'liked'){
+                                        likes = likes + 1;
+                                        document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes;
+                                    }else if(status == 'notLiked'){
+                                        likes = likes - 1;
+                                        document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes;
+                                    }else if(status == 'notLoggedIn'){
+                                        alert('Bitte einloggen um diese Funktion zu nutzen');
+                                    }
+                                });
+                            });
+                        });
+                    </script>
+                    {{#each this.children}}
+                        <div class="col-lg-12">
+                            <div class="card">
+                              <div class="card-body">
+                                  <h6 class="card-subtitle mb-2 text-muted">von: {{this.cuname}}<br/>am: {{this.cdate}} um {{this.ctime}}</h6>
+                                <p class="card-text">{{this.ctext}}</p>
+                                <h6>{{this.cupvotes}} <i class="material-icons" style="margin-top: -5px;margin-left: 5px; position: absolute;">&#xE8DC;</i></h6>
+                              </div>
+                            </div>
+                        </div>
+                    {{/each}}
+                  </div>
+                </div>
+            </div>
+        {{/each}}
+    </div>
+
+</div>

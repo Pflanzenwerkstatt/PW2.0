@@ -1,0 +1,17 @@
+<div class="jumbotron">
+    <form class="form-signin" action="/addExperiment" method="post">
+
+      <h2 class="form-signin-heading">Neues Experiment</h2>
+
+      {{{ error }}}
+      <label for="inputTitel" class="sr-only">Titel</label>
+      <input type="text" id="inputTitel" name="title" class="form-control" placeholder="Titel" required autofocus>
+      <br/>
+      <small>Tipp: Text kann auch mit HTML und CSS formatiert werden</small>
+      <label for="textField" class="sr-only">Text</label>
+      <textarea rows="6" id="textField" name="text" class="form-control" placeholder="News Text" required></textarea>
+
+
+      <button class="btn btn-lg btn-primary btn-block" type="submit">Posten!</button>
+    </form>
+</div>

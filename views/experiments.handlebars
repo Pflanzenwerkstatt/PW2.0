@@ -1,0 +1,32 @@
+<div class="jumbotron">
+  <h1>Experimente</h1>
+  <p class="lead">Experimente die ihr uns geschickt habt.</p>
+
+  {{# if isAuthenticated}}
+    <p><a class="btn btn-primary" href="/addExperiment" role="button">Selber eines hinzufügen!</a></p>
+  {{/if}}
+</div>
+
+<!-- Example row of columns -->
+
+
+
+<div class="jumbotron">
+    <div class="row">
+    {{# each experiment}}
+    <div class="col-lg-4">
+        <div class="card" style="width: 18rem;">
+          <div class="card-body">
+            <a href="/experiment?eid={{this.link}}"><h5 class="card-title">{{{this.title}}}</h5></a>
+            <h6 class="card-subtitle mb-2 text-muted">von: {{this.user}}<br/>am: {{this.date}} um {{this.time}}</h6>
+            <p class="card-text">{{{this.text}}}</p>
+            <a href="/experiment?eid={{this.link}}" class="card-link">Ansehen</a>
+          </div>
+        </div>
+    </div>
+    {{/each}}
+    </div>
+    {{#if expandButton}}
+    <p><a class="btn btn-primary" href="/news?view=all" role="button">Alle Anzeigen</a></p>
+    {{/if}}
+</div>

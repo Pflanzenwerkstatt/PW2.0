@@ -1,0 +1,26 @@
+<div class="jumbotron">
+  <h1>News</h1>
+  <p class="lead">Neuigkeiten zur Hydroponik und zu uns.</p>
+  {{# if admin}}
+    <p><a class="btn btn-primary" href="/addNews" role="button">Neuer Eintrag</a></p>
+  {{/if}}
+</div>
+
+<!-- Example row of columns -->
+
+
+
+<div class="jumbotron">
+    {{# each news}}
+    <div class="col-lg-12 alert alert-success">
+      <h2>{{{this.title}}}</h2>
+      <p><small>{{this.date}} um {{this.time}}</small></p>
+      <p>
+          {{{this.text}}}
+      </p>
+    </div>
+    {{/each}}
+    {{#if expandButton}}
+    <p><a class="btn btn-primary" href="/news?view=all" role="button">Alle Anzeigen</a></p>
+    {{/if}}
+</div>

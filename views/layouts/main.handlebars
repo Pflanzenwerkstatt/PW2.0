@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {{>head}}
+        <title>Pflanzenwerkstatt</title>
+        <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
+        </style>
+    </head>
+    <body>
+
+        {{>navbar}}
+        {{{mainErrorMessage}}}
+        <div class="container">
+            {{{body}}}
+        </div>
+
+        {{>footer}}
+
+        <script src="js/jquery.min.js"></script>
+        <script src="js/popper.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+    </body>
+</html>
