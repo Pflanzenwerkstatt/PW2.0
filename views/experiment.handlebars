@@ -1,5 +1,54 @@
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
 <style>
+    @font-face {
+      font-family: 'Material Icons';
+      font-style: normal;
+      font-weight: 400;
+      src: url(fonts/MaterialIcons-Regular.eot); /* For IE6-8 */
+      src: local('Material Icons'),
+        local('MaterialIcons-Regular'),
+        url(fonts/MaterialIcons-Regular.woff2) format('woff2'),
+        url(fonts/MaterialIcons-Regular.woff) format('woff'),
+        url(fonts/MaterialIcons-Regular.ttf) format('truetype');
+    }
+
+    .material-icons {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;  /* Preferred icon size */
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+
+      /* Support for all WebKit browsers. */
+      -webkit-font-smoothing: antialiased;
+      /* Support for Safari and Chrome. */
+      text-rendering: optimizeLegibility;
+
+      /* Support for Firefox. */
+      -moz-osx-font-smoothing: grayscale;
+
+      /* Support for IE. */
+      font-feature-settings: 'liga';
+    }
+
+
+
+    .experimentCommentButton{
+        background: none;
+        border: none;
+        margin-top: -5px;
+        margin-left: 40px;
+        position: absolute;
+    }
+
+    .material-icons.liked { color: #00da16; }
+
     .experimentLikeButton{
         background: none;
         border: none;
@@ -15,17 +64,21 @@
     <h2 class="form-signin-heading">{{title}}</h2>
 
     <p card-subtitle text-muted>von: {{user}}, am: {{date}}, um: {{time}}</p>
-    <p>{{text}}</p>
-
+    <p>{{{text}}}</p>
 
     <p card-subtitle text-muted>Kommentare:</p>
     <form class="form-signin" action="/experiment" method="post">
 
-        <label for="comment" class="sr-only">Comment</label>
-        <input type="text" id="comment" name="commentText" class="form-control" placeholder="Eigenen Kommentar verfassen" required autofocus>
+        <div class="input-group">
+            <input type="text" id="comment" class="form-control" name="commentText" placeholder="Eigenen Kommentar verfassen" aria-label="Auf Kommentar antworten" aria-describedby="btnGroupAddon" required autofocus>
+            <input type="hidden" name="eid" value="{{eid}}">
+            <div class="input-group-prepend">
+                <button class="input-group-text material-icons comment-reply-button" type="submit" id="comment-reply-SendButton-{{this.cid}}">&#xE163;</button>
+            </div>
+        </div>
+        <br/>
 
-        <input type="hidden" name="eid" value="{{eid}}">
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Kommentieren</button>
+
     </form>
     <br/>
     <div class="row">
@@ -37,37 +90,92 @@
                     <p class="card-text">{{this.ctext}}</p>
                     <h6><span id="upvotes-{{this.cid}}">{{this.cupvotes}}</span>
                         <button class="experimentLikeButton material-icons" id="likeButton-{{this.cid}}">&#xE8DC;</button>
+                        <button class="experimentCommentButton material-icons" id="comment-reply-button-{{this.cid}}">&#xE0B7;</button>
                     </h6>
+                    <br/>
+                    <div id="comment-reply-box-{{this.cid}}">
+                    </div>
                     <script>
-                        var likes = {{this.cupvotes}};
+                        $.post("getLiked",{cid: '{{this.cid}}'},function(status){
+                            if(status){
+                                document.getElementById("likeButton-{{this.cid}}").classList.add('liked');
+                            }else{
+                                document.getElementById("likeButton-{{this.cid}}").classList.remove('liked');
+                            }
+                        });
+                        var likes_{{compactcid}} = {{this.cupvotes}};
                         $(document).ready(function(){
                             $("#likeButton-{{this.cid}}").click(function(){
-                                $.post("likeComment",
-                                {
-                                  cid: '{{this.cid}}'
-                                },
-                                function(status){
+                                $.post("likeComment",{cid: '{{this.cid}}'},function(status){
                                     if(status == 'liked'){
-                                        likes = likes + 1;
-                                        document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes;
+                                        likes_{{compactcid}} = likes_{{compactcid}} + 1;
+                                        document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes_{{compactcid}};
+                                        document.getElementById("likeButton-{{this.cid}}").classList.add('liked');
                                     }else if(status == 'notLiked'){
-                                        likes = likes - 1;
-                                        document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes;
+                                        likes_{{compactcid}} = likes_{{compactcid}} - 1;
+                                        document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes_{{compactcid}};
+                                        document.getElementById("likeButton-{{this.cid}}").classList.remove('liked');
                                     }else if(status == 'notLoggedIn'){
                                         alert('Bitte einloggen um diese Funktion zu nutzen');
                                     }
                                 });
                             });
                         });
+
+
+                        $(document).ready(function(){
+                            $("#comment-reply-button-{{this.cid}}").click(function(){
+                                var commentInput = '<div class="input-group"><input type="text" id="comment-reply-ibox-{{this.cid}}" class="form-control" name="commentText" placeholder="Auf Kommentar antworten" aria-label="Auf Kommentar antworten" aria-describedby="btnGroupAddon required" autofocus><div class="input-group-prepend"><button class="input-group-text material-icons comment-reply-button" id="comment-reply-SendButton-{{this.cid}}">&#xE163;</button></div></div><br/>';
+                                $("#comment-reply-box-{{this.cid}}").html(commentInput);
+                            });
+
+
+                            $('#comment-reply-box-{{this.cid}}').on('click', '.comment-reply-button', function(){
+                                var replyText = $("#comment-reply-ibox-{{this.cid}}").val();
+                                $.post("replyComment",{eid: '{{../eid}}',cid: '{{this.cid}}',replyText:replyText},function(status){
+                                    location.reload();
+                                });
+                            });
+                        });
                     </script>
+
                     {{#each this.children}}
                         <div class="col-lg-12">
                             <div class="card">
                               <div class="card-body">
                                   <h6 class="card-subtitle mb-2 text-muted">von: {{this.cuname}}<br/>am: {{this.cdate}} um {{this.ctime}}</h6>
                                 <p class="card-text">{{this.ctext}}</p>
-                                <h6>{{this.cupvotes}} <i class="material-icons" style="margin-top: -5px;margin-left: 5px; position: absolute;">&#xE8DC;</i></h6>
-                              </div>
+                                <h6><span id="upvotes-{{this.cid}}">{{this.cupvotes}}</span>
+                                    <button class="experimentLikeButton material-icons" id="likeButton-{{this.cid}}">&#xE8DC;</button>
+                                </h6>
+                                <script>
+                                    $.post("getLiked",{cid: '{{this.cid}}'},function(status){
+                                        if(status){
+                                            document.getElementById("likeButton-{{this.cid}}").classList.add('liked');
+                                        }else{
+                                            document.getElementById("likeButton-{{this.cid}}").classList.remove('liked');
+                                        }
+                                    });
+                                    var likes_{{compactcid}} = {{this.cupvotes}};
+                                    $(document).ready(function(){
+                                        $("#likeButton-{{this.cid}}").click(function(){
+                                            $.post("likeComment",{cid: '{{this.cid}}'},function(status){
+                                                if(status == 'liked'){
+                                                    likes_{{compactcid}} = likes_{{compactcid}} + 1;
+                                                    document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes_{{compactcid}};
+                                                    document.getElementById("likeButton-{{this.cid}}").classList.add('liked');
+                                                }else if(status == 'notLiked'){
+                                                    likes_{{compactcid}} = likes_{{compactcid}} - 1;
+                                                    document.getElementById("upvotes-{{this.cid}}").innerHTML = ""+likes_{{compactcid}};
+                                                    document.getElementById("likeButton-{{this.cid}}").classList.remove('liked');
+                                                }else if(status == 'notLoggedIn'){
+                                                    alert('Bitte einloggen um diese Funktion zu nutzen');
+                                                }
+                                            });
+                                        });
+                                    });
+                                </script>
+                                </div>
                             </div>
                         </div>
                     {{/each}}

@@ -18,7 +18,6 @@
     "express-session": "^1.15.6",
     "jquery-comments": "^1.0.1",
     "passport": "^0.4.0",
-    "pg": "^7.4.1",
-    "uuid-validate": "0.0.2"
+    "pg": "^7.4.1"
   }
 }

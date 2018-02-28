@@ -41,8 +41,6 @@ app.use(function(req,res,next){
     next();
 })
 
-
-var validate = require('uuid-validate');
 // Server setup
 app.set('port', process.env.PORT || 80);
 app.use(express.static(__dirname + '/public'));
@@ -103,6 +101,15 @@ function getTime(){
     var currenttime=""+hours+":"+minutes+":"+seconds;
     return currenttime
 }
+function getCompactUUID(cid){
+    var newCid = "";
+    for(var i = 0; i < cid.length; i++){
+        if(cid.charAt(i) != '-'){
+            newCid += cid.charAt(i);
+        }
+    }
+    return newCid;
+}
 
 
 // Routes
@@ -135,56 +142,85 @@ app.get('/addnews', function(req, res){
     }
 
 });
+app.post('/getLiked', function(req, res){
+    if(req.body.cid){
+        if(req.isAuthenticated()){
+            const text = 'SELECT * FROM likes WHERE cid = $1 AND uid = $2';
+            const values = [req.body.cid, req.user];
+            pgPool.query(text, values, (err, result) => {
+                if (err) {
+                    console.log(err.code);
+                    console.log(err.message);
+
+                } else {
+                    // no errors
+                    if (result.rows.length){
+                        res.send(true);
+                    }else{
+                        res.send(false);
+                    }
+                }
+            })
+        }else{
+            res.send(false)
+        }
+    }else{
+        res.send(false)
+    }
+});
+
+
+
 app.post('/likeComment', function(req, res){
     if(req.body.cid){
+        if(req.isAuthenticated()){
+            const text = 'SELECT cid FROM likes WHERE uid = $1';
+            const values = [req.user];
+            pgPool.query(text, values, (err, result) => {
+                if (err) {
+                    console.log(err.code);
+                    console.log(err.message);
+                    res.send('ERROR');
+                } else {
+                    // no errors
+                    cids = [];
+                    for(var i = 0; i < result.rows.length; i++){
+                        cids.push(result.rows[i].cid);
+                    }
+                    if (cids.indexOf(req.body.cid) == -1){
 
-    }else{
+                        pgPool.query('INSERT INTO likes VALUES($1,$2)', [req.body.cid,req.user], (err, result) => {
+                            if (err) {
+                                console.log(err.code);
+                                console.log(err.message);
+                                res.send('ERROR');
+                            } else {
+                                // no errors
+                                res.send('liked');
+                            }
+                        })
 
-    }
-    if(req.isAuthenticated()){
-        const text = 'SELECT cid FROM likes WHERE uid = $1';
-        const values = [req.user];
-        pgPool.query(text, values, (err, result) => {
-            if (err) {
-                console.log(err.code);
-                console.log(err.message);
-                res.send('ERROR');
-            } else {
-                // no errors
-                cids = [];
-                for(var i = 0; i < result.rows.length; i++){
-                    cids.push(result.rows[i].cid);
+                    }else if(cids.indexOf(req.body.cid) != -1){
+                        pgPool.query('DELETE FROM likes WHERE cid = $1 AND uid = $2', [req.body.cid,req.user], (err, result) => {
+                            if (err) {
+                                console.log(err.code);
+                                console.log(err.message);
+                                res.send('ERROR');
+                            } else {
+                                // no errors
+                                res.send('notLiked');
+                            }
+                        })
+                    }
                 }
-                if (cids.indexOf(req.body.cid) == -1){
-
-                    pgPool.query('INSERT INTO likes VALUES($1,$2)', [req.body.cid,req.user], (err, result) => {
-                        if (err) {
-                            console.log(err.code);
-                            console.log(err.message);
-                            res.send('ERROR');
-                        } else {
-                            // no errors
-                            res.send('liked');
-                        }
-                    })
-
-                }else if(cids.indexOf(req.body.cid) != -1){
-                    pgPool.query('DELETE FROM likes WHERE cid = $1 AND uid = $2', [req.body.cid,req.user], (err, result) => {
-                        if (err) {
-                            console.log(err.code);
-                            console.log(err.message);
-                            res.send('ERROR');
-                        } else {
-                            // no errors
-                            res.send('notLiked');
-                        }
-                    })
-                }
-            }
-        })
+            })
+        }else{
+            res.send('notLoggedIn');
+        }
     }else{
-        res.send('notLoggedIn');
+        res.send(false)
     }
+
 });
 app.get('/experiment', function(req, res){
     const text = 'SELECT * FROM experiment NATURAL JOIN users WHERE eid = $1';
@@ -231,14 +267,18 @@ app.get('/experiment', function(req, res){
                             var likes = result.rows[i].clikes;
                             var cdate = convertDate(result.rows[i].cdate);
                             var ctime = convertTime(result.rows[i].ctime);
+                            var compactcid = getCompactUUID(cid);
+
                             if(parent){
                                 for(var j = 0; j < comments.length; j++){
                                     if(comments[j].cid == parent){
-                                        comments[j].children.push({"cid": cid,"cuname":uname,"cparent":parent,"ctext":text,"cdate":cdate,"ctime":ctime, "cupvotes":likes})
+                                        comments[j].children.push({"cid": cid,"compactcid":compactcid,"cuname":uname,"cparent":parent,"ctext":text,"cdate":cdate,"ctime":ctime, "cupvotes":likes})
                                     }
                                 }
+                            }else{
+                                comments.push({"cid": cid,"compactcid":compactcid,"cuname":uname,"ctext":text,"cdate":cdate,"ctime":ctime,"cupvotes":likes,"children":[]})
                             }
-                            comments.push({"cid": cid,"cuname":uname,"ctext":text,"cdate":cdate,"ctime":ctime,"cupvotes":likes,"children":[]})
+
                         }
                         res.render('experiment', {title: title, text: ctext, user: uname, date:cdate, time:ctime, eid:ceid, comments: comments});
                     }
@@ -294,7 +334,7 @@ app.get('/experimente', function(req, res){
                     }
                 })
             }else{
-                res.render('experiments', {news:newsEntries, admin:false, expandButton:false});
+                res.render('experiments', {experiment:experiments, admin:false});
             }
         }
     })
@@ -491,9 +531,31 @@ app.post('/addExperiment', function(req,res){
     })
 })
 
+app.post('/replyComment', function(req,res){
+    if(req.isAuthenticated){
+        if(req.body.cid && req.body.replyText && req.body.eid){
+            pgPool.query('INSERT INTO comment (uid,eid,parent,text,cdate,ctime) VALUES($1, $2, $3, $4, $5, $6);', [req.user,req.body.eid,req.body.cid, req.body.replyText,getDate(),getTime()], (err, result) => {
+                if (err) {
+                    console.log(err.code);
+                    console.log(err.message);
+                    res.send('error');
+                } else {
+                    // no errors
+                    res.send('success');
+                }
+            })
+        }else{
+            res.send('error');
+        }
+    }else{
+        res.send('notLoggedIn');
+    }
+
+
+})
 app.post('/experiment', function(req,res){
     if(req.body.eid && req.body.commentText && req.user){
-        pgPool.query('INSERT INTO comment (uid,eid,text,upvotes,cdate,ctime) VALUES($1, $2, $3, $4, $5, $6);', [req.user,req.body.eid, req.body.commentText,0,getDate(),getTime()], (err, result) => {
+        pgPool.query('INSERT INTO comment (uid,eid,text,cdate,ctime) VALUES($1, $2, $3, $4, $5);', [req.user,req.body.eid, req.body.commentText,getDate(),getTime()], (err, result) => {
             if (err) {
                 console.log(err.code);
                 console.log(err.message);

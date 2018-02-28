@@ -46,7 +46,6 @@ CREATE TABLE experiment (
         ON DELETE CASCADE
 );
 
-DROP TABLE comment
 CREATE TABLE comment (
     cid UUID DEFAULT gen_random_uuid(),
     uid UUID NOT NULL,
@@ -83,7 +82,21 @@ CREATE TABLE likes (
         ON DELETE CASCADE
 );
 
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM website;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM website;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM website;
+REVOKE ALL ON DATABASE pflanzenwerkstatt FROM website;
+DROP ROLE "website";
 
+CREATE USER website WITH PASSWORD 'Pf14NZ3NW3RkS14T1';
+GRANT ALL ON DATABASE pflanzenwerkstatt TO "website";
+GRANT ALL ON ALL TABLES IN SCHEMA public TO website;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO website;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO website;
+
+
+
+/*
 SELECT
     comment.cid,comment.parent,comment.text,comment.cdate,comment.ctime,
     users.uid,users.uname,
@@ -101,36 +114,23 @@ ORDER BY
     comment.cdate DESC,
     comment.ctime DESC;
 
+UPDATE users SET type = 'admin' WHERE email = 'admin@test.com';
 
 
-SELECT comment.cid,comment.parent,comment.text,comment.cdate,comment.ctime,users.uid,users.uname,count(likes.*) as "clikes" FROM comment JOIN users ON comment.uid = users.uid LEFT JOIN likes ON comment.cid = likes.cid WHERE eid = '36ffa628-aaac-4728-b7cb-5a0f21020d2b' GROUP BY comment.cid,users.uid,users.uname ORDER BY comment.parent DESC,clikes DESC, comment.cdate DESC,comment.ctime DESC
 
 
-    SELECT
-        comment.cid,count(likes.*) as "likes"
-    FROM comment
-        JOIN users ON comment.uid = users.uid
-        left JOIN likes ON comment.cid = likes.cid
-    WHERE eid = '36ffa628-aaac-4728-b7cb-5a0f21020d2b'
-    GROUP BY
-        comment.cid
-    ORDER BY
-        comment.parent DESC,
-        comment.cdate DESC,
-        comment.ctime DESC;
 
-UPDATE comment SET parent = 'f1023da2-96e1-4e70-9f59-c29b6c46fac9' WHERE cid = 'a107e9c1-820f-4cdb-ad66-6d95b2d3766a';
 
-REVOKE ALL ON ALL TABLES IN SCHEMA public FROM website;
-REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM website;
-REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM website;
-REVOKE ALL ON DATABASE pflanzenwerkstatt FROM website;
-DROP ROLE "website";
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM jdbcuser;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM jdbcuser;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM jdbcuser;
+REVOKE ALL ON DATABASE restaurant FROM jdbcuser;
+DROP ROLE "jdbcuser";
 
-CREATE USER website WITH PASSWORD 'Pf14NZ3NW3RkS14T1';
-GRANT ALL ON DATABASE pflanzenwerkstatt TO "website";
-GRANT ALL ON ALL TABLES IN SCHEMA public TO website;
-GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO website;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO website;
 
-UPDATE users SET type = 'admin' WHERE email = 'ricwu@test.com';
+CREATE USER jdbcuser WITH PASSWORD 'Pf14NZ3NW3RkS14T1';
+GRANT ALL ON DATABASE restaurant TO "jdbcuser";
+GRANT ALL ON ALL TABLES IN SCHEMA public TO jdbcuser;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO jdbcuser;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO jdbcuser;
+*/
